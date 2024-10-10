@@ -12,7 +12,7 @@ As a first step I have transformed the HAMLA and HES files provided [by the nati
 
 ## Hamlets as entities
 
-The apporach of simply turning the provided data into DataFrames without further work introduces several problems. Firstly the provided tables contain massive redundacies in the information identifying hamlets. Every entry reproduces the hamlet ID, location and, for the HAMLA datasets, name. Furthermore, due to presumed errors in inputting the data, some locations and hamlet names are inconsistent.
+The approach of simply turning the provided data into DataFrames without further work introduces several problems. Firstly the provided tables contain massive redundancies in the information identifying hamlets. Every entry reproduces the hamlet ID, location and, for the HAMLA datasets, name. Furthermore, due to presumed errors in inputting the data, some locations and hamlet names are inconsistent.
 
 Additionally the data differences between the HAMLA and HES70/71 tables complicate a direct comparison between them.
 

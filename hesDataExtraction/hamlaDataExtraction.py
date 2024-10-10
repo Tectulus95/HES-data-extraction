@@ -5,7 +5,6 @@ from os import walk
 
 import pandas as pd
 import geopandas as gpd
-import mgrs
 from shapely.geometry import Point
 import numpy as np
 

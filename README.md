@@ -14,6 +14,6 @@ As a first step I have transformed the HAMLA and HES files provided [by the nati
 
 The approach of simply turning the provided data into DataFrames without further work introduces several problems. Firstly the provided tables contain massive redundancies in the information identifying hamlets. Every entry reproduces the hamlet ID, location and, for the HAMLA datasets, name. Furthermore, due to presumed errors in inputting the data, some locations and hamlet names are inconsistent.
 
-Additionally the data differences between the HAMLA and HES70/71 tables complicate a direct comparison between them.
+Additionally, the data differences between the HAMLA and HES70/71 tables complicate a direct comparison between them.
 
 In order to have relatively consistent hamlet level data over time (at least in the columns that can be compared between versions) I have decided to implement a relational model that maps datapoints onto hamlet entities.

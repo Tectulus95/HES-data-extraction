@@ -1,6 +1,7 @@
 """The provided methods are designed to turn the tab-seperated HAMLA and HES files provided by the US national
 archive at https://catalog.archives.gov/id/4616225 into Geopandas DataFrames with EPSG:4326 encoded coordinates
 """
+import os
 from os import walk
 
 import pandas as pd
@@ -25,7 +26,7 @@ def hamla_data_extraction(filepath: str) -> tuple:
     str
         Name of the file
     """
-    filename = filepath.split("\\")[-1]
+    filename = os.path.split(filepath)[1]
     f = open(filepath, "r")
     length = sum(1 for _ in f)
     f.seek(0)
@@ -81,7 +82,7 @@ def hes_70_71_data_extraction(directory: str) -> tuple:
     """
     pdlist = []
     filenames = next(walk(directory), (None, None, []))[2]
-    name = directory.split("\\")[-2]
+    name = os.path.split(directory)[1]
     for i, filename in enumerate(filenames):
         print(f"File {i+1} of {len(filenames)}: {filename}")
         filepath = directory + filename

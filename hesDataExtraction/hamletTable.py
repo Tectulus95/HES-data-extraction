@@ -85,10 +85,11 @@ def get_hamlet_locations(hamlet_info: DataFrame, save: bool = False, rel_path: s
 
     Parameters
     ----------
-    hamlet_info
-    save
+    hamlet_info: DataFrame
+        Input DataFrame of hamlet master file data
+    save: bool
         Save resulting DataFrame as .csv file
-    rel_path
+    rel_path: str
         Relative path to the desired output folder if save is set to true
 
     Returns
@@ -111,6 +112,19 @@ def get_hamlet_locations(hamlet_info: DataFrame, save: bool = False, rel_path: s
     return df
 
 def to_GeoDataFrame(hamlet_info: DataFrame, save: bool = False) -> GeoDataFrame:
+    """Add EPSG:4326 coordinates from the mgrs coordinates and return a GeoDataFrame
+
+    Parameters
+    ----------
+    hamlet_info: DataFrame
+        Input DataFrame of hamlets
+    save: bool
+        Save resulting DataFrame as .csv file
+
+    Returns
+    -------
+    DataFrame
+    """
     hamlet_info = gpd.GeoDataFrame(hamlet_info)
     coords = []
     for i, row in hamlet_info.iterrows():
@@ -131,5 +145,10 @@ def to_GeoDataFrame(hamlet_info: DataFrame, save: bool = False) -> GeoDataFrame:
         hamlet_info.to_file(os.path.join(dirname,"hamlets_shp/hamlets.shp"))
     return (hamlet_info)
 
-df = pd.read_csv(os.path.join(dirname, "masterfile/hamlet_table.csv"))
-to_GeoDataFrame(df, True)
+def main():
+    df = hamlets_master_from_zip("masterfile", True)
+    hamlet_table = get_hamlet_locations(df, True, "masterfile")
+    hamlet_gdf = to_GeoDataFrame(hamlet_table, True)
+
+if __name__ == __main__:
+    main()

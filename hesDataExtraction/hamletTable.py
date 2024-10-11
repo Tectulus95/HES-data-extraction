@@ -150,5 +150,5 @@ def main():
     hamlet_table = get_hamlet_locations(df, True, "masterfile")
     hamlet_gdf = to_GeoDataFrame(hamlet_table, True)
 
-if __name__ == __main__:
+if __name__ == "__main__":
     main()

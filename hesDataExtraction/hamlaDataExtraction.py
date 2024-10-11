@@ -21,8 +21,8 @@ def hamla_data_extraction(filepath: str) -> tuple:
 
     Returns
     -------
-    DataFrame
-        DataFrame created from the HES data
+    GeoDataFrame
+        GeoDataFrame created from the HES data
     str
         Name of the file
     """
@@ -75,8 +75,10 @@ def hes_70_71_data_extraction(directory: str) -> tuple:
 
     Returns
     -------
-    DataFrame
-        DataFrame created from the HES data
+    GeoDataFrame
+        GeoDataFrame created from the HES hamlet data
+    GeoDataFrame
+        GeoDataFrame created from the HES village data
     str
         Name of the file
     """

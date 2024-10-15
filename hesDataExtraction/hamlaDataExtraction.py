@@ -57,7 +57,7 @@ def hamla_data_extraction(filepath: str, withCoords: bool = True) -> tuple:
     hamlet_info["CLASX"] = pd.to_numeric(hamlet_info["CLASX"])
     hamlet_info["VISIT"] = pd.to_numeric(hamlet_info["VISIT"])
     if not withCoords:
-        hamlet_info = hamlet_info.drop(columns=["CHAM", "PHAM", "DHAM", "VHAM", "HHAM", "POINT", " +PCN", " +SC0"])
+        hamlet_info = hamlet_info.drop(columns=["CHAM", "PHAM", "DHAM", "VHAM", "HHAM", "POINT", " +PCN", " +SC0", "NAME", "XNAME"])
     else:
         hamlet_info = gpd.GeoDataFrame(hamlet_info)
         coords = []

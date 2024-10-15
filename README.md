@@ -6,6 +6,14 @@ The US national archives [collection of Vietnam War electronic data files](https
 
 In the context of my bachelor's thesis the goal of this repository is to document my approach in extracting and transforming the data into a format that is easily usable with modern tools and lay the foundation for enabling a data driven approach to research the US war in Vietnam.
 
+## Requirements
+
+**Python 3.11**
+
+- `geopandas 1.0.1`
+- `mgrs 1.5.0`
+- `pandas 2.2.3`
+
 ## Geopandas DataFrames from tab-separated text files
 
 As a first step I have transformed the HAMLA and HES files provided [by the national archive](https://catalog.archives.gov/id/4616225) into Geopandas DataFrames with EPSG:4326 encoded coordinates. Through the "toShapefile.py" script it's possible to save them as Shapefiles for further use in GIS software.

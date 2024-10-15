@@ -11,18 +11,21 @@ import numpy as np
 
 from utils import makedict, toCoord, progress
 
-def hamla_data_extraction(filepath: str) -> tuple:
-    """Extracts data from a hamla text file and turns it into a geopandas dataframe
+def hamla_data_extraction(filepath: str, withCoords: bool = True) -> tuple:
+    """Extracts data from a hamla text file and turns it into a (geo)pandas dataframe
 
     Parameters
     ----------
     filepath: str
         Path to the hamla text file
+    withCoords: bool
+        If True the returned DataFrame will not be transformed into a GeoDataFrame and not contatin
+        geographic data and only identify its hamlet by USID
 
     Returns
     -------
-    GeoDataFrame
-        GeoDataFrame created from the HES data
+    DataFrame/GeoDataFrame
+        (Geo)DataFrame created from the HES data
     str
         Name of the file
     """
@@ -43,42 +46,53 @@ def hamla_data_extraction(filepath: str) -> tuple:
             progress("Parsing data into DataFrame", i, length)
     f.close()
     hamlet_info = pd.DataFrame(hamletlist)
+    hamlet_info["USID"] = pd.Series(dtype='str')
+    for i, row in hamlet_info.iterrows():
+        USID = row["CHAM"] + row["PHAM"] + row["DHAM"] + row["VHAM"] + row["HHAM"]
+        hamlet_info.at[i, "USID"] = USID
+        progress(f"USID {USID}", i, len(hamlet_info))
     hamlet_info["POPUL"] = pd.to_numeric(hamlet_info["POPUL"])
     hamlet_info["SECUR"] = pd.to_numeric(hamlet_info["SECUR"])
     hamlet_info["DEVEL"] = pd.to_numeric(hamlet_info["DEVEL"])
     hamlet_info["CLASX"] = pd.to_numeric(hamlet_info["CLASX"])
     hamlet_info["VISIT"] = pd.to_numeric(hamlet_info["VISIT"])
-    hamlet_info = gpd.GeoDataFrame(hamlet_info)
-    coords = []
-    for i, row in hamlet_info.iterrows():
-        coords.append(toCoord(row["POINT"]))
-        progress("Converting coordinates", i, len(hamlet_info))
-    point_coords =[]
-    for i, entry in enumerate(coords):
-        if entry is not None:
-            point_coords.append(Point(entry[1], entry[0]))
-        else: point_coords.append(None)
-        progress("Inverting coordinates", i, len(coords))
+    if not withCoords:
+        hamlet_info = hamlet_info.drop(columns=["CHAM", "PHAM", "DHAM", "VHAM", "HHAM", "POINT", " +PCN", " +SC0"])
+    else:
+        hamlet_info = gpd.GeoDataFrame(hamlet_info)
+        coords = []
+        for i, row in hamlet_info.iterrows():
+            coords.append(toCoord(row["POINT"]))
+            progress("Converting coordinates", i, len(hamlet_info))
+        point_coords =[]
+        for i, entry in enumerate(coords):
+            if entry is not None:
+                point_coords.append(Point(entry[1], entry[0]))
+            else: point_coords.append(None)
+            progress("Inverting coordinates", i, len(coords))
         
-    s = gpd.GeoSeries(point_coords, crs="EPSG:4326")
-    hamlet_info["coords"] = s
-    hamlet_info = hamlet_info.set_geometry("coords")
+        s = gpd.GeoSeries(point_coords, crs="EPSG:4326")
+        hamlet_info["coords"] = s
+        hamlet_info = hamlet_info.set_geometry("coords")
     return(hamlet_info, filename)
 
-def hes_70_71_data_extraction(directory: str) -> tuple:
-    """Extracts data from a HES 70 text file and turns it into a geopandas dataframe
+def hes_70_71_data_extraction(directory: str, withCoords: bool = True) -> tuple:
+    """Extracts data from a HES 70 text file and turns it into a (geo)pandas dataframe
 
     Parameters
     ----------
     directory: str
         Path to the HES text files per year
+    withCoords: bool
+        If True the returned DataFrame will not be transformed into a GeoDataFrame and not contatin
+        geographic data and only identify its hamlet or village by USID
 
     Returns
     -------
-    GeoDataFrame
-        GeoDataFrame created from the HES hamlet data
-    GeoDataFrame
-        GeoDataFrame created from the HES village data
+    DataFrame/GeoDataFrame
+        (Geo)DataFrame created from the HES hamlet data
+    DataFrame/GeoDataFrame
+        (Geo)DataFrame created from the HES village data
     str
         Name of the file
     """
@@ -105,10 +119,13 @@ def hes_70_71_data_extraction(directory: str) -> tuple:
         f.close()
         pdlist.append(pd.DataFrame(hamletlist))
         pdlist[i]["entryid"] = pd.Series(dtype='str')
+        pdlist[i]["USID"] = pd.Series(dtype='str')
         for j, row in pdlist[i].iterrows():
-            entryid = row["PROV"] + row["DIST"] + row["VILG"] + row["HAM"] + row.iloc[6]
+            USID = row["CORPS"] + row["PROV"] + row["DIST"] + row["VILG"] + row["HAM"]
+            entryid = USID + row.iloc[6]
+            pdlist[i].at[j, "USID"] = USID
             pdlist[i].at[j, "entryid"] = entryid
-            progress("Writing entry IDs", j, len(pdlist[i]))
+            progress("Writing IDs", j, len(pdlist[i]))
         if i > 1:
             pdlist[i] = pdlist[i].drop(columns=["CORPS", "PROV", "DIST", "VILG", "HAM", " +PCN"])
     outputframehamlets = pdlist[0]
@@ -129,36 +146,41 @@ def hes_70_71_data_extraction(directory: str) -> tuple:
     outputframevillages["VTPOP"] = pd.to_numeric(outputframevillages["VTPOP"])
     outputframevillages["VHCNT"] = pd.to_numeric(outputframevillages["VHCNT"])
 
-    outputframehamlets = gpd.GeoDataFrame(outputframehamlets)
-    hcoords = []
-    for i, row in outputframehamlets.iterrows():
-        hcoords.append(toCoord(row["HPOINT"]))
-        progress("Converting coordinates", i, len(outputframehamlets))
-    h_point_coords =[]
-    for i, entry in enumerate(hcoords):
-        if entry is not None:
-            h_point_coords.append(Point(entry[1], entry[0]))
-        else: h_point_coords.append(None)
-        progress("Inverting coordinates", i, len(hcoords))
+    if not toCoord:
+        outputframehamlets = outputframehamlets.drop(columns=["CORPS", "PROV", "DIST", "VILG", "HAM", " +PCN", "HPOINT", "entryid"])
+        outputframevillages = outputframevillages.drop(columns=["CORPS", "PROV", "DIST", "VILG", "HAM", " +PCN", "VPOINT", "entryid"])
+    
+    else:
+        outputframehamlets = gpd.GeoDataFrame(outputframehamlets)
+        hcoords = []
+        for i, row in outputframehamlets.iterrows():
+            hcoords.append(toCoord(row["HPOINT"]))
+            progress("Converting coordinates", i, len(outputframehamlets))
+        h_point_coords =[]
+        for i, entry in enumerate(hcoords):
+            if entry is not None:
+                h_point_coords.append(Point(entry[1], entry[0]))
+            else: h_point_coords.append(None)
+            progress("Inverting coordinates", i, len(hcoords))
         
-    s1 = gpd.GeoSeries(h_point_coords, crs="EPSG:4326")
-    outputframehamlets["coords"] = s1
-    outputframehamlets = outputframehamlets.set_geometry("coords")
+        s1 = gpd.GeoSeries(h_point_coords, crs="EPSG:4326")
+        outputframehamlets["coords"] = s1
+        outputframehamlets = outputframehamlets.set_geometry("coords")
 
-    outputframevillages = gpd.GeoDataFrame(outputframevillages)
-    vcoords = []
-    for i, row in outputframevillages.iterrows():
-        vcoords.append(toCoord(row["VPOINT"]))
-        progress("Converting coordinates", i, len(outputframevillages))
-    v_point_coords =[]
-    for i, entry in enumerate(vcoords):
-        if entry is not None:
-            v_point_coords.append(Point(entry[1], entry[0]))
-        else: v_point_coords.append(None)
-        progress("Inverting coordinates", i, len(vcoords))
+        outputframevillages = gpd.GeoDataFrame(outputframevillages)
+        vcoords = []
+        for i, row in outputframevillages.iterrows():
+            vcoords.append(toCoord(row["VPOINT"]))
+            progress("Converting coordinates", i, len(outputframevillages))
+        v_point_coords =[]
+        for i, entry in enumerate(vcoords):
+            if entry is not None:
+                v_point_coords.append(Point(entry[1], entry[0]))
+            else: v_point_coords.append(None)
+            progress("Inverting coordinates", i, len(vcoords))
         
-    s2 = gpd.GeoSeries(v_point_coords, crs="EPSG:4326")
-    outputframevillages["coords"] = s1
-    outputframevillages = outputframevillages.set_geometry("coords")
+        s2 = gpd.GeoSeries(v_point_coords, crs="EPSG:4326")
+        outputframevillages["coords"] = s1
+        outputframevillages = outputframevillages.set_geometry("coords")
 
     return outputframehamlets, outputframevillages, name

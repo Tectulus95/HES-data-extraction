@@ -55,9 +55,13 @@ def hamla_data_extraction(filepath: str, withCoords: bool = True) -> tuple:
     hamlet_info["SECUR"] = pd.to_numeric(hamlet_info["SECUR"])
     hamlet_info["DEVEL"] = pd.to_numeric(hamlet_info["DEVEL"])
     hamlet_info["CLASX"] = pd.to_numeric(hamlet_info["CLASX"])
+    hamlet_info["CONFX"] = pd.to_numeric(hamlet_info["CONFX"])
     hamlet_info["VISIT"] = pd.to_numeric(hamlet_info["VISIT"])
+    for column in hamlet_info.columns:
+        if column not in ["POPUL", "SECUR", "DEVEL", "CLASX", "CONFX", "VISIT", "USID", "DATE"]:
+            hamlet_info[column] = hamlet_info[column].astype("string")
     if not withCoords:
-        hamlet_info = hamlet_info.drop(columns=["CHAM", "PHAM", "DHAM", "VHAM", "HHAM", "POINT", " +PCN", " +SC0", "NAME", "XNAME"])
+        hamlet_info = hamlet_info.drop(columns=["CHAM", "PHAM", "DHAM", "VHAM", "HHAM", "POINT", " +PCN", " +SC0", "NAME", "XNAME", "VSZ"])
     else:
         hamlet_info = gpd.GeoDataFrame(hamlet_info)
         coords = []
@@ -145,6 +149,12 @@ def hes_70_71_data_extraction(directory: str, withCoords: bool = True) -> tuple:
     outputframevillages["VTEMP"] = pd.to_numeric(outputframevillages["VTEMP"])
     outputframevillages["VTPOP"] = pd.to_numeric(outputframevillages["VTPOP"])
     outputframevillages["VHCNT"] = pd.to_numeric(outputframevillages["VHCNT"])
+    for column in outputframehamlets.columns:
+        if column not in ["HPOPUL", "HPERM", "HTEMP", "USID"]:
+            outputframehamlets[column] = outputframehamlets[column].astype("string")
+    for column in outputframevillages.columns:
+        if column not in ["VNHPOP", "VHPOP", "VPERM", "VTEMP", "VTPOP", "VHCNT", "USID"]:
+            outputframevillages[column] = outputframevillages[column].astype("string")
 
     if not withCoords:
         outputframehamlets = outputframehamlets.drop(columns=["CORPS", "PROV", "DIST", "VILG", "HAM", " +PCN", "HPOINT", "entryid"])

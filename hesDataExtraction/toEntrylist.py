@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 from os import walk
+import sqlite3
 
 import pandas as pd
 
@@ -8,6 +9,8 @@ import hamlaDataExtraction
 from utils import progress
 
 dirname = os.path.dirname(__file__)
+
+con = sqlite3.connect("hes_data.db")
 
 def hamla():
     hesDirectory = os.path.join(dirname, "hamlatextfiles")
@@ -19,11 +22,12 @@ def hamla():
         for j, row in df.iterrows():
             df.at[j, "DATE"] = datetime.strptime(f"19{row["DATE"]}", "%Y%m")
             progress("Parsing Dates", j, len(df))
+        df["DATE"] = pd.to_datetime(df["DATE"])
         DataFrames.append(df)
     for i in range(1, len(DataFrames)):
         DataFrames[0] = pd.concat([DataFrames[0], DataFrames[i]])
     DataFrames[0] = DataFrames[0].reset_index(drop=True)
-    DataFrames[0].to_csv("hamla.csv")
+    DataFrames[0].to_sql("hamla", con, if_exists='replace')
     return DataFrames[0]
 
 def hes():
@@ -47,9 +51,11 @@ def hes():
     for i in range(1, len(VDataFrames)):
         VDataFrames[0] = pd.concat([VDataFrames[0], VDataFrames[i]])
     HDataFrames[0] = HDataFrames[0].reset_index(drop=True)
-    HDataFrames[0].to_csv("hes_ham.csv")
+    HDataFrames[0].dropna(how='all', axis=1, inplace=True)
+    HDataFrames[0].to_sql("hes_ham", con, if_exists='replace')
     VDataFrames[0] = VDataFrames[0].reset_index(drop=True)
-    VDataFrames[0].to_csv("hes_vil.csv")
+    VDataFrames[0].dropna(how='all', axis=1, inplace=True)
+    VDataFrames[0].to_sql("hes_vil", con, if_exists='replace')
     return HDataFrames[0], VDataFrames[0]
 
 hes()

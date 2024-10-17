@@ -101,7 +101,7 @@ def hes_70_71_data_extraction(directory: str, withCoords: bool = True) -> tuple:
     name = os.path.split(directory)[1]
     for i, filename in enumerate(filenames):
         print(f"File {i+1} of {len(filenames)}: {filename}")
-        filepath = directory + filename
+        filepath = os.path.join(directory,filename)
         f = open(filepath, "r")
         length = sum(1 for _ in f)
         f.seek(0)
@@ -146,7 +146,7 @@ def hes_70_71_data_extraction(directory: str, withCoords: bool = True) -> tuple:
     outputframevillages["VTPOP"] = pd.to_numeric(outputframevillages["VTPOP"])
     outputframevillages["VHCNT"] = pd.to_numeric(outputframevillages["VHCNT"])
 
-    if not toCoord:
+    if not withCoords:
         outputframehamlets = outputframehamlets.drop(columns=["CORPS", "PROV", "DIST", "VILG", "HAM", " +PCN", "HPOINT", "entryid"])
         outputframevillages = outputframevillages.drop(columns=["CORPS", "PROV", "DIST", "VILG", "HAM", " +PCN", "VPOINT", "entryid"])
     

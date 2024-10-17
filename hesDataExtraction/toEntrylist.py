@@ -5,7 +5,7 @@ import sqlite3
 
 import pandas as pd
 
-import hamlaDataExtraction
+import hesDataExtraction
 from utils import progress
 
 dirname = os.path.dirname(__file__)
@@ -18,7 +18,7 @@ def hamla():
     DataFrames = []
     for i, filename in enumerate(filenames):
         print(f"HAMLA file {i+1} of {len(filenames)}")
-        df, name = hamlaDataExtraction.hamla_data_extraction(os.path.join(hesDirectory, filename), False)
+        df, name = hesDataExtraction.hamla_data_extraction(os.path.join(hesDirectory, filename), False)
         for j, row in df.iterrows():
             df.at[j, "DATE"] = datetime.strptime(f"19{row["DATE"]}", "%Y%m")
             progress("Parsing Dates", j, len(df))
@@ -37,7 +37,7 @@ def hes():
     VDataFrames = []
     for i, directory in enumerate(directories):
         print(f"HES directory {i+1} of {len(directories)}")
-        hamdf, vildf, name = hamlaDataExtraction.hes_70_71_data_extraction(os.path.join(hesDirectory, directory), False)
+        hamdf, vildf, name = hesDataExtraction.hes_70_71_data_extraction(os.path.join(hesDirectory, directory), False)
         for j, row in hamdf.iterrows():
             hamdf.at[j, "DATE"] = datetime.strptime(f"19{row["HDATE"]}", "%Y%m")
             progress("Parsing Dates Hamlets", j, len(hamdf))

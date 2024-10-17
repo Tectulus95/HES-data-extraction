@@ -142,9 +142,9 @@ def to_GeoDataFrame(hamlet_info: DataFrame, save: bool = False) -> GeoDataFrame:
     hamlet_info["coords"] = s
     hamlet_info = hamlet_info.set_geometry("coords")
     if save:
-        if not os.path.isdir(os.path.join(dirname, "hamlets_shp")):
-            os.mkdir(os.path.join(dirname, "hamlets_shp"))
-        hamlet_info.to_file(os.path.join(dirname,"hamlets_shp/hamlets.shp"))
+        if not os.path.isdir("hamlets_shp"):
+            os.mkdir("hamlets_shp")
+        hamlet_info.to_file("hamlets_shp/hamlets.shp")
     return (hamlet_info)
 
 def main():

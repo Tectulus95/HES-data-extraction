@@ -58,4 +58,5 @@ def hes():
     VDataFrames[0].to_sql("hes_vil", con, if_exists='replace')
     return HDataFrames[0], VDataFrames[0]
 
+hamla()
 hes()

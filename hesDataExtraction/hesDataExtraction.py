@@ -57,6 +57,7 @@ def hamla_data_extraction(filepath: str, withCoords: bool = True) -> tuple:
     hamlet_info["CLASX"] = pd.to_numeric(hamlet_info["CLASX"])
     hamlet_info["CONFX"] = pd.to_numeric(hamlet_info["CONFX"])
     hamlet_info["VISIT"] = pd.to_numeric(hamlet_info["VISIT"])
+    hamlet_info["USID"] = pd.to_numeric(hamlet_info["USID"])
     for column in hamlet_info.columns:
         if column not in ["POPUL", "SECUR", "DEVEL", "CLASX", "CONFX", "VISIT", "USID", "DATE"]:
             hamlet_info[column] = hamlet_info[column].astype("string")
@@ -138,8 +139,6 @@ def hes_70_71_data_extraction(directory: str, withCoords: bool = True) -> tuple:
     for i in range(2, len(pdlist)):
         outputframehamlets = pd.merge(outputframehamlets, pdlist[i], on="entryid", how='left')
         outputframevillages = pd.merge(outputframevillages, pdlist[i], on="entryid", how='left')
-    #outputframehamlets.to_csv(f"hamlets{name}.csv")
-    #outputframevillages.to_csv(f"villages{name}.csv")
     outputframehamlets["HPOPUL"] = pd.to_numeric(outputframehamlets["HPOPUL"])
     outputframehamlets["HPERM"] = pd.to_numeric(outputframehamlets["HPERM"])
     outputframehamlets["HTEMP"] = pd.to_numeric(outputframehamlets["HTEMP"])

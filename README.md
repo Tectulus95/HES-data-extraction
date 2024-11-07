@@ -31,7 +31,7 @@ In order to have relatively consistent hamlet level data over time (at least in 
 `hesDataExtraction/hamlatextfiles`\
 Provides the tab separated HAMLA files which were in use from 1967 to mid-1969.
 
-`hesDataExtraction/hamlatextfiles`\
+`hesDataExtraction/hestextfiles`\
 Provides the tab separated HES files which were in use from mid-1969 to early 1974. The files are split into periodical sets which are grouped in directories named after the operative timeframe.
 
 `hesDataExtraction/masterfile`\
@@ -39,6 +39,9 @@ Holds the HES masterfile separated out into its constituent tables. Table 6 is u
 
 `hesDataExtraction/hamlets_shp`\
 ESRI shapefile of the hamlet reference data extracted from the masterfile.
+
+`dataExploration`\
+Provides the Flask application for interactively exploring the data.
 
 ## Scripts
 
@@ -67,3 +70,5 @@ I have provided as many output files as possible with this repository, however d
 Both can be created by the `toShapefile.py` and `toEntrylist.py` respectively. All required files are provided in this repository.
 
 **Note:** The hesshapefiles directory has a size of ca. 7.6GB.
+
+This repository is still under development.

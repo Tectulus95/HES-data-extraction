@@ -1,3 +1,5 @@
+"""Provides the data handling methods for the flask server.
+"""
 import os
 from datetime import datetime
 import sqlite3

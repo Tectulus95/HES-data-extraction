@@ -1,68 +1,24 @@
-""" flask_example.py
+""" Runs the flask server for interacting with the data in the browser.
 
-    Required packages:
-    - flask
-    - folium
-
-    Usage:
-
-    Start the flask server by running:
-
-        $ python flask_example.py
-
-    And then head to http://127.0.0.1:5000 in your browser to see the map displayed
+    Run this file and then head to http://127.0.0.1:5000 in your browser to see the map displayed
 
 """
-
-import bokeh
-from bokeh.plotting import figure, show
-from bokeh.models import ColumnDataSource
-from flask import Flask, render_template_string, render_template
+from datetime import datetime
+from json import dumps
 import os
 
-import folium
-import pandas as pd
+import bokeh
+from bokeh.models import ColumnDataSource
+from bokeh.plotting import figure, show
+from flask import Flask, render_template_string, render_template
 import geopandas as gpd
-import plotly.express as px
+import pandas as pd
 from plotly import utils
-from json import dumps
-from datetime import datetime
+import plotly.express as px
+
 import hamlet_export
 
 dirname = os.path.dirname(__file__)
-
-def create_map():
-    m = folium.Map(tiles="esri.WorldTopoMap", location=(14, 106), zoom_start=7)
-    return m
-
-def update_map(m, date):
-    colors = {
-        "00":"white",
-        "SE":"green",
-        "SS":"yellow",
-        "CO":"orange",
-        "VC":"red",
-        "":"white",
-        None:"white"
-        }
-    qdate = pd.date_range(date, periods=1, freq="MS")
-    folium.GeoJson(
-        hamlet_export.dynamic_gdf(qdate),
-        name = "Hamlet Markers",
-        marker=folium.CircleMarker(radius=4, fill_color="orange", fill_opacity=0.4, color="black", weight=1),
-        popup=folium.GeoJsonPopup(fields=["Hamlet Nam", "USID", "POPUL", "SCSTA", "CLASX"]),
-        style_function=lambda x: {
-            "fillColor": colors[x['properties']['SCSTA']],
-            "radius": (x['properties']['POPUL'])/2000+3,
-        }
-    ).add_to(m)
-    return m
-
-def get_geojson(date):
-    qdate = pd.date_range(date, periods=1, freq="MS")
-    gdf = hamlet_export.dynamic_gdf(qdate)
-    gdf.rename(columns={"Hamlet Nam": "Hamlet Name"})
-    return gdf.to_json()
 
 def load_and_filter_shp(filename, column, value):
     gdf = gpd.read_file(filename)
@@ -84,78 +40,6 @@ def js_map():
     json = get_geojson("011967")
     return render_template("map_template.html", geojson=json)
 
-
-@app.route("/date/<date>")
-def fullscreen(date):
-
-    """Simple example of a fullscreen map."""
-    date = datetime.strptime(f"19{date}", "%Y%m")
-    m = create_map()
-    m = update_map(m, date)
-    folium.LayerControl().add_to(m)
-    return m.get_root().render()
-
-
-@app.route("/iframe")
-def iframe():
-    """Embed a map as an iframe on a page."""
-    
-    m = create_map()
-    m = update_map(m)
-
-    # set the iframe width and height
-    m.get_root().width = "800px"
-    m.get_root().height = "600px"
-    iframe = m.get_root()._repr_html_()
-
-    return render_template_string(
-        """
-            <!DOCTYPE html>
-            <html>
-                <head></head>
-                <body>
-                    <h1>HES data for</h1>
-                    {{ iframe|safe }}
-                </body>
-            </html>
-        """,
-        iframe=iframe,
-    )
-
-
-@app.route("/components")
-def components():
-    """Extract map components and put those on a page."""
-    m = folium.Map(
-        width=1440,
-        height=720,
-    )
-
-    m.get_root().render()
-    header = m.get_root().header.render()
-    body_html = m.get_root().html.render()
-    script = m.get_root().script.render()
-
-    return render_template_string(
-        """
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    {{ header|safe }}
-                </head>
-                <body>
-                    <h1>Using components</h1>
-                    {{ body_html|safe }}
-                    <script>
-                        {{ script|safe }}
-                    </script>
-                </body>
-            </html>
-        """,
-        header=header,
-        body_html=body_html,
-        script=script,
-    )
 
 @app.route("/usid/<usid>")
 def hamlet_data(usid):

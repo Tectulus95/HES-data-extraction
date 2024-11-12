@@ -32,8 +32,12 @@ def dynamic_gdf(daterange = None):
         df = pd.merge(right=hamla, left=hamlets, on="USID", how="right")
         df["DATE"] = df["DATE"].astype("string")
         df = gpd.GeoDataFrame(df)
-    else:
+    elif daterange[-1] < datetime.strptime("07/1969", "%m/%Y"):
         df = pd.merge(right=hamla[hamla["DATE"].isin(daterange)], left=hamlets, on="USID", how="right")
+        df["DATE"] = df["DATE"].astype("string")
+        df = gpd.GeoDataFrame(df)
+    else:
+        df = pd.merge(right=hes[hes["DATE"].isin(daterange)], left=hamlets, on="USID", how="right")
         df["DATE"] = df["DATE"].astype("string")
         df = gpd.GeoDataFrame(df)
     return df

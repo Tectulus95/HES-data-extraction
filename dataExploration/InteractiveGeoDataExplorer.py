@@ -18,6 +18,7 @@ import bokeh
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource
 from flask import Flask, render_template_string, render_template
+import os
 
 import folium
 import pandas as pd
@@ -27,6 +28,8 @@ from plotly import utils
 from json import dumps
 from datetime import datetime
 import hamlet_export
+
+dirname = os.path.dirname(__file__)
 
 def create_map():
     m = folium.Map(tiles="esri.WorldTopoMap", location=(14, 106), zoom_start=7)
@@ -55,12 +58,31 @@ def update_map(m, date):
     ).add_to(m)
     return m
 
+def get_geojson(date):
+    qdate = pd.date_range(date, periods=1, freq="MS")
+    gdf = hamlet_export.dynamic_gdf(qdate)
+    gdf.rename(columns={"Hamlet Nam": "Hamlet Name"})
+    return gdf.to_json()
+
 def load_and_filter_shp(filename, column, value):
     gdf = gpd.read_file(filename)
     output = gdf.loc[gdf[column]==value]
     return output
 
 app = Flask(__name__)
+
+@app.route('/get_geojson/<dString>')
+def get_geojson(dString):
+    d = datetime.strptime(dString, "%m%Y")
+    qdate = pd.date_range(d, periods=1, freq="MS")
+    gdf = hamlet_export.dynamic_gdf(qdate)
+    gdf.rename(columns={"Hamlet Nam": "Hamlet Name"})
+    return gdf.to_json()
+
+@app.route('/')
+def js_map():
+    json = get_geojson("011967")
+    return render_template("map_template.html", geojson=json)
 
 
 @app.route("/date/<date>")

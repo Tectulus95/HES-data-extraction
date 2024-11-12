@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>HES Visualisation</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        .leaflet-container {
+            height: 400px;
+            width: 600px;
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+
+
+</head>
+<body>
+
+
+
+    <div id="map" style="width: 100%; height: 85%;"></div>
+    <div id="controls">
+        <button id="decrease_button" onclick="decreaseMonth()"><</button><span id="month_text"></span><button id="increase_button" onclick="increaseMonth()">></button>
+    </div>
+    <script>
+
+        var wHeight = window.screen.height;
+        var wWidth = window.screen.width;
+        var geoStyle = "HAMLA";
+
+        const months = [];
+        for (let i = 0; i < 85; i++) {
+            months[i] = new Date(1967, i)
+        }
+
+        var intMonth = 0
+
+        function getMonthYear(d, slash) {
+            let year = d.getFullYear();
+            let month = d.getMonth();
+            let monthStr = (month + 1).toString();
+            let dString;
+            if (monthStr.length < 2) { monthStr = "0" + monthStr; }
+            if (slash == true) {
+                dString = monthStr + "/" + year.toString();
+            } else {
+                dString = monthStr + year.toString();
+            }
+            return dString;
+        }
+
+        const map = L.map('map').setView([13, 106], 7);
+
+        const tiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+            { "attribution": "Tiles \u0026copy; Esri \u0026mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community", "detectRetina": false, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false }
+        ).addTo(map);
+
+        var geojsonMarkerOptions = {
+            radius: 10,
+            fillColor: "#ffffff",
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.6
+        };
+
+        var geojsonFeature = {{ geojson|safe }}
+
+        var hamletLayer = L.geoJSON(geojsonFeature, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            },
+            style: function (feature) {
+                var pop = feature.properties.POPUL;
+                var size = pop / 2000 + 3;
+                let color;
+                switch (feature.properties.SCSTA) {
+                    case 'SE': color = "#00ff00"; break;
+                    case 'SS': color = "#ffff00"; break;
+                    case 'CO': color = "#ff8800"; break;
+                    case 'VC': color = "#ff0000"; break;
+                    default: color = "#ffffff";
+                }
+                return { radius: size, fillColor: color };
+                
+            },
+            onEachFeature: function (feature, layer) {
+                if (months[intMonth] < new Date(1969, 5)) {
+                    layer.bindPopup(`<p>${feature.properties["Hamlet Nam"]}</p><p>Population: ${feature.properties.POPUL}</p><p>Security Status: ${feature.properties.SCSTA}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
+                } else {
+                    layer.bindPopup(`<p>${feature.properties["Hamlet Nam"]}</p><p>Population: ${feature.properties.HPOPUL}</p><p>Pacification Model Status: ${feature.properties.HCAT}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
+                }
+            }
+        }).addTo(map);
+        //myLayer.addData();
+        document.getElementById("month_text").innerHTML = getMonthYear(months[intMonth], true);
+
+        function updateMap(d) {
+            let dateStr = getMonthYear(d, false);
+            fetch(`/get_geojson/${dateStr}`)
+                .then(response => response.json())
+                .then(data => {
+                    hamletLayer.clearLayers();
+                    hamletLayer.addData(data);
+                    if (d > new Date(1969, 5)) {
+                        console.log("HES formatting")
+                        hamletLayer.setStyle(
+                            function (feature) {
+                                var pop = feature.properties.HPOPUL;
+                                var size = pop / 2000 + 3;
+                                let color;
+                                switch (feature.properties.HCAT) {
+                                    case 'A': color = "#00ff00"; break;
+                                    case 'B': color = "#88ff00"; break;
+                                    case 'C': color = "#ffff00"; break;
+                                    case 'D': color = "#ffdd00"; break;
+                                    case 'E': color = "#ffbb00"; break;
+                                    case 'N': color = "#ff8800"; break;
+                                    case 'V': color = "#ff0000"; break;
+                                    default: color = "#ffffff";
+                                }
+                                return { radius: size, fillColor: color };
+                            }
+                        );
+                    }
+                }
+            );
+        }
+
+        function increaseMonth() {
+            if (intMonth < months.length) {
+                intMonth++;
+                document.getElementById("month_text").innerHTML = getMonthYear(months[intMonth], true);
+                updateMap(months[intMonth]);
+            }
+        }
+
+        function decreaseMonth() {
+            if (intMonth > 0) {
+                intMonth--;
+                document.getElementById("month_text").innerHTML = getMonthYear(months[intMonth], true);
+                updateMap(months[intMonth]);
+            }
+        }
+
+    </script>
+
+
+
+</body>
+</html>

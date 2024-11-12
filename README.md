@@ -54,7 +54,7 @@ Provides the methods to extract the hamlet data from the masterfile, find the mo
 `hesDataExtraction/toShapefile.py`\
 Uses the methods provided by hesDataExtraction to save HES and HAMLA data as ESRI shapefiles.
 
-`hesDataExtraction/toShapefile.py`\
+`hesDataExtraction/toEntrylist.py`\
 Uses the methods provided by hesDataExtraction to write the HES and HAMLA data into a SQLite database for use with the reference data shapefile.
 
 `hesDataExtraction/utils`\

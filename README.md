@@ -71,4 +71,11 @@ Both can be created by the `toShapefile.py` and `toEntrylist.py` respectively. A
 
 **Note:** The hesshapefiles directory has a size of ca. 7.6GB.
 
+# How to get it running
+
+1. Install the dependencies from requirements.txt
+1. Run hamletTable.py to generate the shapefile containing the hamlet information
+1. Run toEntrylist.py to generate the database of HAMLA and HES entries
+1. Run InteractiveGeoDataExplorer.py and open the indicated url in your browser
+
 This repository is still under development.

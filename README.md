@@ -91,6 +91,7 @@ I have provided as many output files as possible with this repository, however d
 
 # How to get it running
 
+1. Create a new virtual environment
 1. Install the dependencies from requirements.txt
 1. Add your data.world OAuth token to `/THOR/config.ini`
 1. Run `data_setup.py` to download and generate the data for the Geopackage database

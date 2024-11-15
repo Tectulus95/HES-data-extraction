@@ -11,6 +11,9 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="heatmap.min.js"></script>
+    <script src="leaflet-heatmap.js"></script>
+    <script src="msgpack.min.js"></script>
 
     <style>
         html, body {
@@ -24,6 +27,27 @@
             max-width: 100%;
             max-height: 100%;
         }
+
+        .slider {
+            -webkit-appearance: none; /* Override default CSS styles */
+            appearance: none;
+            width: 100%; /* Full-width */
+            height: 25px; /* Specified height */
+            background: #d3d3d3; /* Grey background */
+            outline: none; /* Remove outline */
+            opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+            -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+            transition: opacity .2s;
+        }
+
+        .timecontrols {
+            position: fixed;
+            width: 50%;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
     </style>
 
 
@@ -32,15 +56,25 @@
 
 
 
-    <div id="map" style="width: 100%; height: 85%;"></div>
-    <div id="controls">
-        <button id="decrease_button" onclick="decreaseMonth()"><</button><span id="month_text"></span><button id="increase_button" onclick="increaseMonth()">></button>
+    <div id="map" style="width: 100%; height: 100%;"></div>
+    <div class="timecontrols">
+        <div id="controls">
+            <button id="decrease_button" onclick="decreaseMonth()"><</button><span id="month_text"></span><button id="increase_button" onclick="increaseMonth()">></button>
+        </div>
+        <div class="slidecontainer">
+            <input type="range" min="0" max="84" value="0" class="slider" id="myRange">
+        </div>
     </div>
     <script>
 
         var wHeight = window.screen.height;
         var wWidth = window.screen.width;
         var geoStyle = "HAMLA";
+
+        var slider = document.getElementById("myRange");
+        var output = document.getElementById("month_text");
+        slider.value = 0;
+        //output.innerHTML = slider.value; // Display the default slider value
 
         const months = [];
         for (let i = 0; i < 85; i++) {
@@ -69,7 +103,7 @@
             { "attribution": "Tiles \u0026copy; Esri \u0026mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community", "detectRetina": false, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false }
         ).addTo(map);
 
-        var geojsonMarkerOptions = {
+        let geojsonMarkerOptions = {
             radius: 10,
             fillColor: "#ffffff",
             color: "#000",
@@ -78,9 +112,10 @@
             fillOpacity: 0.6
         };
 
-        var geojsonFeature = {{ geojson|safe }}
+        let hamletGeojsonFeature = {{ hamlets| safe }}
+        let thorGeojsonFeature;
 
-        var hamletLayer = L.geoJSON(geojsonFeature, {
+        let hamletLayer = L.geoJSON(hamletGeojsonFeature, {
             pointToLayer: function (feature, latlng) {
                 return L.circleMarker(latlng, geojsonMarkerOptions);
             },
@@ -96,18 +131,56 @@
                     default: color = "#ffffff";
                 }
                 return { radius: size, fillColor: color };
-                
+
             },
             onEachFeature: function (feature, layer) {
                 if (months[intMonth] < new Date(1969, 5)) {
-                    layer.bindPopup(`<p>${feature.properties["Hamlet Nam"]}</p><p>Population: ${feature.properties.POPUL}</p><p>Security Status: ${feature.properties.SCSTA}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
+                    layer.bindPopup(`<p>${feature.properties["Hamlet Name"]}</p><p>Population: ${feature.properties.POPUL}</p><p>Security Status: ${feature.properties.SCSTA}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
                 } else {
-                    layer.bindPopup(`<p>${feature.properties["Hamlet Nam"]}</p><p>Population: ${feature.properties.HPOPUL}</p><p>Pacification Model Status: ${feature.properties.HCAT}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
+                    layer.bindPopup(`<p>${feature.properties["Hamlet Name"]}</p><p>Population: ${feature.properties.HPOPUL}</p><p>Pacification Model Status: ${feature.properties.HCAT}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
                 }
             }
         }).addTo(map);
         //myLayer.addData();
         document.getElementById("month_text").innerHTML = getMonthYear(months[intMonth], true);
+
+        let cfg = {
+            "radius": 0.05,
+            "maxOpacity": .8,
+            // scales the radius based on map zoom
+            "scaleRadius": true,
+            // if set to false the heatmap uses the global maximum for colorization
+            // if activated: uses the data maximum within the current map boundaries
+            //   (there will always be a red spot with useLocalExtremas true)
+            "useLocalExtrema": true,
+            // which field name in your data represents the latitude - default "lat"
+            latField: 'lat',
+            // which field name in your data represents the longitude - default "lng"
+            lngField: 'lon',
+            // which field name in your data represents the data value - default "value"
+            valueField: 'wgt'
+        };
+
+        let heatmapLayer = new HeatmapOverlay(cfg);
+
+        fetch(`/get_thor/011967`)
+            .then(response => response.bytes())
+            .then(data => {
+                thorGeojsonFeature = msgpack.deserialize(data);
+                heatmapLayer.addTo(map);
+                heatmapLayer.setData(msgpack.deserialize(data));
+            }
+        );
+        var basemaps = {
+            "esri Topo": tiles
+        };
+
+        var overlays = {
+            "Hamlets": hamletLayer,
+            "THOR": heatmapLayer
+        };
+
+        L.control.layers(basemaps, overlays).addTo(map);
 
         function updateMap(d) {
             let dateStr = getMonthYear(d, false);
@@ -117,7 +190,6 @@
                     hamletLayer.clearLayers();
                     hamletLayer.addData(data);
                     if (d > new Date(1969, 5)) {
-                        console.log("HES formatting")
                         hamletLayer.setStyle(
                             function (feature) {
                                 var pop = feature.properties.HPOPUL;
@@ -139,7 +211,21 @@
                     }
                 }
             );
+            fetch(`/get_thor/${dateStr}`)
+                .then(response => response.bytes())
+                .then(data => {
+                    heatmapLayer.setData(msgpack.deserialize(data));
+                }
+                );
         }
+
+        slider.oninput = function () {
+            intMonth = this.value;
+            let month = getMonthYear(months[intMonth], true);
+            output.innerHTML = month;
+        }
+
+        slider.onmouseup = function () { updateMap(months[intMonth]) };
 
         function increaseMonth() {
             if (intMonth < months.length) {
@@ -158,8 +244,6 @@
         }
 
     </script>
-
-
 
 </body>
 </html>

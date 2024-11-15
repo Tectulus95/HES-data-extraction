@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Dashboard {{name | safe}}</title>
+</head>
+<body>
+
+    <h3>Line Graph Representations {{name | safe}}</h3>
+
+    <!-- scatter plot goes in this div -->
+    <div id='fig1_div'></div>
+    <div id='fig2_div'></div>
+
+    <script type="text/javascript">
+
+
+        var fig1_graph = {{fig1_json | safe}};
+        var fig2_graph = {{fig2_json | safe}};
+
+        fig1 = document.getElementById('fig1_div');
+        fig2 = document.getElementById('fig2_div');
+
+
+        Plotly.plot(fig1, fig1_graph);
+        Plotly.plot(fig2, fig2_graph);
+
+    </script>
+</body>
+</html>

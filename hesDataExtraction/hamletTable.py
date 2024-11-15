@@ -10,6 +10,7 @@ from shapely.geometry import Point
 from utils import makedict, toCoord, progress
 
 dirname = os.path.dirname(__file__)
+parentdir = "".join(dirname.split()[0:-1])
 
 def get_most_common(df: DataFrame, USID: str, columns: list[str]) -> dict:
     """Finds the most common entry in the indicated columns for a given hamlet
@@ -76,6 +77,7 @@ def hamlets_master_from_zip(rel_path: str, save: bool = False) -> DataFrame:
                     pass
                 progress("Parsing data into DataFrame", i, length-1)
             hamlet_info = pd.DataFrame(hamletlist)
+            hamlet_info["USID"] = pd.to_numeric(hamlet_info["USID"])
             if save:
                 hamlet_info.to_csv(os.path.join(dirname, rel_path, "hamlets_master.csv"))
     return hamlet_info
@@ -142,14 +144,13 @@ def to_GeoDataFrame(hamlet_info: DataFrame, save: bool = False) -> GeoDataFrame:
     hamlet_info["coords"] = s
     hamlet_info = hamlet_info.set_geometry("coords")
     if save:
-        if not os.path.isdir("hamlets_shp"):
-            os.mkdir("hamlets_shp")
-        hamlet_info.to_file("hamlets_shp/hamlets.shp")
+        savepath = os.path.join(parentdir, 'HES.gpkg')
+        hamlet_info.to_file(savepath, driver='GPKG', layer='Hamlets')
     return (hamlet_info)
 
 def main():
-    df = hamlets_master_from_zip("masterfile", True)
-    hamlet_table = get_hamlet_locations(df, True, "masterfile")
+    df = hamlets_master_from_zip("masterfile")
+    hamlet_table = get_hamlet_locations(df)
     hamlet_gdf = to_GeoDataFrame(hamlet_table, True)
 
 if __name__ == "__main__":

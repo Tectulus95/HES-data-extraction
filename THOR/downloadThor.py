@@ -19,13 +19,20 @@ headers = {
     "authorization": auth
 }
 
-response = requests.get(url, headers=headers, stream=True)
-print(response.headers)
+def download_thor():
+    response = requests.get(url, headers=headers, stream=True)
+    print(response.headers)
 
-with open(filename, 'wb') as f:
-    downloaded = 0
-    for chunk in response.iter_content(chunk_size=2048):
-        if chunk:
-            f.write(chunk)
-            downloaded += len(chunk)
-            print(f"{(downloaded)/1024:.2f}MB", end='\r')
+    with open(filename, 'wb') as f:
+        downloaded = 0
+        for chunk in response.iter_content(chunk_size=2048):
+            if chunk:
+                f.write(chunk)
+                downloaded += len(chunk)
+                print(f"{(downloaded)/1024:.2f}MB", end='\r')
+
+def main():
+    download_thor()
+
+if __name__ == "__main__":
+    main()

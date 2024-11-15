@@ -1,16 +1,19 @@
 from datetime import datetime
 import os
 from os import walk
-import sqlite3
+#import sqlite3
 
 import pandas as pd
+import geopandas as gpd
 
 import hesDataExtraction
 from utils import progress
 
 dirname = os.path.dirname(__file__)
+parentdir = "".join(dirname.split()[0:-1])
 
-con = sqlite3.connect("hes_data.db")
+#con = sqlite3.connect("hes_data.db")
+savepath = os.path.join(parentdir, 'HES.gpkg')
 
 def hamla():
     hesDirectory = os.path.join(dirname, "hamlatextfiles")
@@ -27,7 +30,8 @@ def hamla():
     for i in range(1, len(DataFrames)):
         DataFrames[0] = pd.concat([DataFrames[0], DataFrames[i]])
     DataFrames[0] = DataFrames[0].reset_index(drop=True)
-    DataFrames[0].to_sql("hamla", con, if_exists='replace')
+    #DataFrames[0].to_sql("hamla", con, if_exists='replace')
+    gpd.GeoDataFrame(DataFrames[0]).to_file(savepath, layer="HAMLA", driver="GPKG")
     return DataFrames[0]
 
 def hes():
@@ -52,11 +56,17 @@ def hes():
         VDataFrames[0] = pd.concat([VDataFrames[0], VDataFrames[i]])
     HDataFrames[0] = HDataFrames[0].reset_index(drop=True)
     HDataFrames[0].dropna(how='all', axis=1, inplace=True)
-    HDataFrames[0].to_sql("hes_ham", con, if_exists='replace')
+    #HDataFrames[0].to_sql("hes_ham", con, if_exists='replace')
+    gpd.GeoDataFrame(HDataFrames[0]).to_file(savepath, layer="HES_hamlets", driver="GPKG")
     VDataFrames[0] = VDataFrames[0].reset_index(drop=True)
     VDataFrames[0].dropna(how='all', axis=1, inplace=True)
-    VDataFrames[0].to_sql("hes_vil", con, if_exists='replace')
+    #VDataFrames[0].to_sql("hes_vil", con, if_exists='replace')
+    gpd.GeoDataFrame(VDataFrames[0]).to_file(savepath, layer="HES_villages", driver="GPKG")
     return HDataFrames[0], VDataFrames[0]
 
-hamla()
-hes()
+def main():
+    hamla()
+    hes()
+
+if __name__ == "__main__":
+    main()

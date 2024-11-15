@@ -145,14 +145,14 @@
         document.getElementById("month_text").innerHTML = getMonthYear(months[intMonth], true);
 
         let cfg = {
-            "radius": 0.05,
+            "radius": 0.02,
             "maxOpacity": .8,
             // scales the radius based on map zoom
             "scaleRadius": true,
             // if set to false the heatmap uses the global maximum for colorization
             // if activated: uses the data maximum within the current map boundaries
             //   (there will always be a red spot with useLocalExtremas true)
-            "useLocalExtrema": true,
+            "useLocalExtrema": false,
             // which field name in your data represents the latitude - default "lat"
             latField: 'lat',
             // which field name in your data represents the longitude - default "lng"
@@ -232,6 +232,7 @@
                 intMonth++;
                 document.getElementById("month_text").innerHTML = getMonthYear(months[intMonth], true);
                 updateMap(months[intMonth]);
+                slider.value = intMonth;
             }
         }
 
@@ -240,6 +241,7 @@
                 intMonth--;
                 document.getElementById("month_text").innerHTML = getMonthYear(months[intMonth], true);
                 updateMap(months[intMonth]);
+                slider.value = intMonth;
             }
         }
 

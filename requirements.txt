@@ -6,3 +6,4 @@ pandas==2.2.3
 plotly==5.24.1
 plotly-express==0.4.1
 requests==2.32.2
+u-msgpack-python==2.8.0

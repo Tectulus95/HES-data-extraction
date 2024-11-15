@@ -22,9 +22,14 @@ In order to have relatively consistent hamlet level data over time (at least in 
 
 **Python 3.11**
 
+- `Flask 3.0.0`
 - `geopandas 1.0.1`
 - `mgrs 1.5.0`
 - `pandas 2.2.3`
+- `plotly 5.24.1`
+- `plotly-express 0.4.1`
+- `requests 2.32.2`
+- `u-msgpack-python 2.8.0`
 
 ## Directory strucure
 
@@ -43,39 +48,52 @@ ESRI shapefile of the hamlet reference data extracted from the masterfile.
 `dataExploration`\
 Provides the Flask application for interactively exploring the data.
 
+`THOR`\
+Provides scripts for processing the THOR data and holds the .csv file from [data.world](https://data.world/datamil/vietnam-war-thor-data).
+
 ## Scripts
 
 `hesDataExtraction/hesDataExtraction.py`\
 Provides the methods for extracting the data from HES and HAMLA text files and turning them into Pandas DataFrames.
 
 `hesDataExtraction/hamletTable.py`\
-Provides the methods to extract the hamlet data from the masterfile, find the most common coordinates for each hamlet and turn the data into a DataFrame or GeoDataFrame with one entry per hamlet.
+Provides the methods to extract the hamlet data from the masterfile, find the most common coordinates for each hamlet and turn the data into a DataFrame or GeoDataFrame with one entry per hamlet. Additionally exports the data into the Geopackage database.
 
 `hesDataExtraction/toShapefile.py`\
 Uses the methods provided by hesDataExtraction to save HES and HAMLA data as ESRI shapefiles.
 
 `hesDataExtraction/toEntrylist.py`\
-Uses the methods provided by hesDataExtraction to write the HES and HAMLA data into a SQLite database for use with the reference data shapefile.
+Uses the methods provided by hesDataExtraction to write the HES and HAMLA data into the Geopackage database for use with the reference data shapefile.
 
 `hesDataExtraction/utils`\
 Provides a number of common utility methods.
+
+`THOR/downloadThor`\
+Script to download the THOR dataset from [data.world](https://data.world/datamil/vietnam-war-thor-data). Don't forget to add your data.world OAuth token to the config.ini for this to work.
+
+`THOR/thorFilterAndExport`\
+Script to process the THOR dataset and save it in the Geopackage database.
+
+`dataExploration/hamlet_export.py`\
+Provides methods for dynamically loading and transforming data from the database at runtime.
+
+`dataExploration/InteractiveGeoDataExplorer.py`\
+The actual application.
 
 ## Files not provided in this repository
 
 I have provided as many output files as possible with this repository, however due to the gitHub file size limit I was unable to upload the following files:
 
-- `hesshapefiles`
-- `hes_data.db` 
-
-Both can be created by the `toShapefile.py` and `toEntrylist.py` respectively. All required files are provided in this repository.
+- `hesshapefiles` (used for testing purposes during development and unnecessary to run the actual application)
+- `HES.gpkg` (database storing all processed data for the application) 
 
 **Note:** The hesshapefiles directory has a size of ca. 7.6GB.
 
 # How to get it running
 
 1. Install the dependencies from requirements.txt
-1. Run hamletTable.py to generate the shapefile containing the hamlet information
-1. Run toEntrylist.py to generate the database of HAMLA and HES entries
+1. Add your data.world OAuth token to `/THOR/config.ini`
+1. Run `data_setup.py` to download and generate the data for the Geopackage database
 1. Run InteractiveGeoDataExplorer.py and open the indicated url in your browser
 
 This repository is still under development.

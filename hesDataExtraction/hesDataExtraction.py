@@ -103,6 +103,7 @@ def hes_70_71_data_extraction(directory: str, withCoords: bool = True) -> tuple:
     """
     pdlist = []
     filenames = next(walk(directory), (None, None, []))[2]
+    filenames = sorted(filenames)
     name = os.path.split(directory)[1]
     for i, filename in enumerate(filenames):
         print(f"File {i+1} of {len(filenames)}: {filename}")

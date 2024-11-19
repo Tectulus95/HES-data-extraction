@@ -1,5 +1,6 @@
 import configparser
 import os
+from urllib3.exceptions import HttpError
 
 import requests
 
@@ -22,14 +23,16 @@ headers = {
 def download_thor():
     response = requests.get(url, headers=headers, stream=True)
     print(response.headers)
-
-    with open(filename, 'wb') as f:
-        downloaded = 0
-        for chunk in response.iter_content(chunk_size=2048):
-            if chunk:
-                f.write(chunk)
-                downloaded += len(chunk)
-                print(f"{(downloaded)/1024:.2f}MB", end='\r')
+    if response.status_code == 200:
+        with open(filename, 'wb') as f:
+            downloaded = 0
+            for chunk in response.iter_content(chunk_size=2048):
+                if chunk:
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    print(f"{(downloaded)/1024:.2f}MB", end='\r')
+    else:
+        raise HttpError(response.status_code)
 
 def main():
     download_thor()

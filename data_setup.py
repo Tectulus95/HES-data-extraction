@@ -4,11 +4,13 @@ import sys
 dirname = os.path.dirname(__file__)
 sys.path.append(os.path.join(dirname, 'hesDataExtraction'))
 sys.path.append(os.path.join(dirname, 'THOR'))
+sys.path.append(os.path.join(dirname, 'SITRA'))
 
 import hamletTable
 import toEntrylist
 import downloadThor
 import thorFilterAndExport
+import sitraFilterAndExport
 
 def main():
     print("Exporting Hamlets to Geopackage")
@@ -22,6 +24,8 @@ def main():
     downloadThor.download_thor()
     print("Exporting THOR data to Geopackage")
     thorFilterAndExport.thor_to_db()
+    print("Exporting SITRA data to Geopackage")
+    sitraFilterAndExport.sitraFilterAndExport()
 
 if __name__ == "__main__":
     main()

@@ -226,6 +226,7 @@
         }
 
         slider.onmouseup = function () { updateMap(months[intMonth]) };
+        slider.ontouchend = function () { updateMap(months[intMonth]) };
 
         function increaseMonth() {
             if (intMonth < months.length) {

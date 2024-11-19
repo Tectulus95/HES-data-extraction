@@ -1,6 +1,5 @@
 """Provides the data handling methods for the flask server.
 """
-from lib2to3.pgen2 import driver
 import os
 from datetime import date, datetime, timedelta
 import sqlite3

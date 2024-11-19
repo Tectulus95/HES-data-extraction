@@ -7,9 +7,6 @@ from datetime import datetime
 from json import dumps
 import os
 
-import bokeh
-from bokeh.models import ColumnDataSource
-from bokeh.plotting import figure, show
 from flask import Flask, make_response, render_template_string, render_template
 import geopandas as gpd
 import pandas as pd

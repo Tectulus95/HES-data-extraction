@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Search</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <style>
+
+        /* Style the tab */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+            /* Style the buttons that are used to open the tab content */
+            .tab button {
+                background-color: inherit;
+                float: left;
+                border: none;
+                outline: none;
+                cursor: pointer;
+                padding: 14px 16px;
+                transition: 0.3s;
+            }
+
+                /* Change background color of buttons on hover */
+                .tab button:hover {
+                    background-color: #ddd;
+                }
+
+                /* Create an active/current tablink class */
+                .tab button.active {
+                    background-color: #ccc;
+                }
+
+        /* Style the tab content */
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+            overflow-x: scroll;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 2px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+
+
+</head>
+<body>
+    <div class="w3-bar w3-green">
+        <div class="w3-bar-item"><a href="/">Home</a></div>
+        <div class="w3-bar-item"><a href="/map">Map</a></div>
+        <div class="w3-bar-item"><a href="/search">Search Hamlet</a></div>
+    </div>
+    <div class="w3-container">
+        <h1>Vietnam War Electronic Data Visualisation</h1>
+        <form>
+            <label for="search">Enter USID or hamlet name</label>
+            <input type="text" id="search" name="search" />
+            <button type="button" onclick="searchHamlets()">Search</button>
+        </form>
+    </div>
+    <div id="searchDiv"></div>
+    <script type="text/javascript">
+
+        function usidToTable(targetDiv, results) {
+            let text = '<table>\n<tr><th>USID</th><th>Name</th><th>Location</th></tr>';
+            for (const x of results.features) {
+                text += `\n<tr><td><a href="/usid/${x.properties.USID}">${x.properties.USID}</a></td><td>${x.properties["Hamlet Name"]}</td><td>${x.geometry.coordinates[0]}°E, ${x.geometry.coordinates[1]}°N</td>`
+            }
+            text += "</table>";
+            targetDiv.innerHTML = text;
+        }
+
+        function searchHamlets() {
+            let targetDiv = document.getElementById('searchDiv');
+            let searchString = document.getElementById('search').value.toUpperCase();
+            fetch("/usid_search", {
+                method: 'POST',
+                body: JSON.stringify({
+                    search_string: searchString
+                }),
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8"
+                }
+            })
+            .then(response => response.json())
+            .then(json => {
+                results = json;
+                usidToTable(targetDiv, results)
+            }
+            );
+        }
+    </script>
+</body>
+</html>

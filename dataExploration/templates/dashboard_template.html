@@ -4,30 +4,235 @@
     <base target="_top">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="../msgpack.min.js"></script>
     <title>Dashboard {{name | safe}}</title>
+    <style>
+        /* Style the tab */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+            /* Style the buttons that are used to open the tab content */
+            .tab button {
+                background-color: inherit;
+                float: left;
+                border: none;
+                outline: none;
+                cursor: pointer;
+                padding: 14px 16px;
+                transition: 0.3s;
+            }
+
+                /* Change background color of buttons on hover */
+                .tab button:hover {
+                    background-color: #ddd;
+                }
+
+                /* Create an active/current tablink class */
+                .tab button.active {
+                    background-color: #ccc;
+                }
+
+        /* Style the tab content */
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+            overflow-x: scroll;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 2px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
+    <div class="w3-bar w3-green">
+        <div class="w3-bar-item"><a href="/">Home</a></div>
+        <div class="w3-bar-item"><a href="/map">Map</a></div>
+        <div class="w3-bar-item"><a href="/search">Search Hamlet</a></div>
+    </div>
+    <div class="w3-container">
+        <h3>Dashboard {{name | safe}}</h3>
+        <form method="post" action="/map"
+              target="_blank">
+            <input type="hidden" name="x" value="{{ x | safe }}">
+            <input type="hidden" name="y" value="{{ y | safe }}">
+            <input type="submit" value="Open in Map">
+        </form>
 
-    <h3>Line Graph Representations {{name | safe}}</h3>
+    </div>
 
-    <!-- scatter plot goes in this div -->
-    <div id='fig1_div'></div>
-    <div id='fig2_div'></div>
+    <!-- Tab links -->
+    <div class="tab">
+        <button class="tablinks" onclick="openSource(event, 'HAMLA')" id="defaultOpen">HAMLA</button>
+        <button class="tablinks" onclick="openSource(event, 'HES')">HES</button>
+        <button class="tablinks" onclick="openSource(event, 'Raw Data')">Raw Data</button>
+        <button class="tablinks" onclick="openSource(event, 'Events')">Events</button>
+    </div>
+
+    <!-- Tab content -->
+    <div id="HAMLA" class="tabcontent">
+        <h3>HAMLA</h3>
+        <div id='fig1_div'></div>
+        <div id='fig2_div'></div>
+        <div id='fig3_div'></div>
+    </div>
+
+    <div id="HES" class="tabcontent">
+        <h3>HES</h3>
+        <div id='fig4_div'></div>
+        <div id='fig5_div'></div>
+        <div id='fig6_div'></div>
+    </div>
+
+    <div id="Raw Data" class="tabcontent">
+        <h3>Raw Data</h3>
+        <p><b>HAMLA data</b></p>
+        <div id="HAMLARaw"></div>
+        <p><b>HES data</b></p>
+        <div id="HESRaw"></div>
+    </div>
+
+    <div id="Events" class="tabcontent">
+        <h3>Events</h3>
+        <form>
+            <label for="type">Event type</label>
+            <select id="type" name="type">
+                <option value="thor">THOR</option>
+                <option value="sitra_simp">SITRA</option>
+            </select>
+            <label for="radius">Radius around hamlet</label>
+            <input type="number" id="radius" name="radius" />
+            <button type="button" onclick="getEvents()">submit</button>
+        </form>
+        <div id="event table"></div>
+    </div>
 
     <script type="text/javascript">
 
+    var fig1_graph = {{ fig1_json | safe}};
+    var fig2_graph = {{ fig2_json | safe}};
+    var fig3_graph = {{ fig3_json | safe}};
+    var fig4_graph = {{ fig4_json | safe}};
+    var fig5_graph = {{ fig5_json | safe}};
+    var fig6_graph = {{ fig6_json | safe}};
+    var hamla_json = {{ hamla_json | safe }};
+    var hes_json = {{ hes_json | safe }};
 
-        var fig1_graph = {{fig1_json | safe}};
-        var fig2_graph = {{fig2_json | safe}};
+    let fig1 = document.getElementById('fig1_div');
+    let fig2 = document.getElementById('fig2_div');
+    let fig3 = document.getElementById('fig3_div');
+    let fig4 = document.getElementById('fig4_div');
+    let fig5 = document.getElementById('fig5_div');
+    let fig6 = document.getElementById('fig6_div');
+    let hamla_table = document.getElementById('HAMLARaw');
+    let hes_table = document.getElementById('HESRaw');
 
-        fig1 = document.getElementById('fig1_div');
-        fig2 = document.getElementById('fig2_div');
+    Plotly.plot(fig1, fig1_graph);
+    Plotly.plot(fig2, fig2_graph);
+    Plotly.plot(fig3, fig3_graph);
+    Plotly.plot(fig4, fig4_graph);
+    Plotly.plot(fig5, fig5_graph);
+    Plotly.plot(fig6, fig6_graph);
 
+    function openSource(evt, name) {
+        // Declare all variables
+        var i, tabcontent, tablinks;
 
-        Plotly.plot(fig1, fig1_graph);
-        Plotly.plot(fig2, fig2_graph);
+        // Get all elements with class="tabcontent" and hide them
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+
+        // Get all elements with class="tablinks" and remove the class "active"
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+
+        // Show the current tab, and add an "active" class to the button that opened the tab
+        document.getElementById(name).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    function dictToTable(div_id, object) {
+        let text = '<table>\n<tr>';
+        for (const x of object.columns.values()) {
+            text += `<th>${x}</th>\n`;
+        }
+        text += '</tr>\n';
+        for (let i = 0; i < object.data.length; i++) {
+            text += '<tr>\n';
+            for (let j = 0; j < object.data[i].length; j++) {
+                text += `<td>${object.data[i][j]}</td>\n`;
+            }
+            text += '</tr>\n';
+        }
+        text += '<tr>\n</table>';
+        div_id.innerHTML = text;
+    }
+
+    function geoJsonToTable(div_id, object, type) {
+        let text = '<table>\n<tr>';
+        if (type == 'thor') {
+            text += '<th>ID</th><th>Date</th><th>Aircraft</th><th>Weapon Type</th><th>Weapon Type Weight</th><th>No. Weapons Delivered</th><th>Distance<th></tr>'
+            for (const x of object.features) {
+                text += `\n<tr><td>${x.id}</td><td>${x.properties.MSNDATE}</td><td>${x.properties.AIRCRAFT_ORIGINAL}</td><td>${x.properties.WEAPONTYPE}</td><td>${x.properties.WEAPONTYPEWEIGHT}</td><td>${x.properties.NUMWEAPONSDELIVERED}</td><td>${x.properties.Distance}</td>`
+            }
+        } else if (type == 'sitra_simp') {
+            text += '<th>ID</th><th>Date</th><th>No. Killed</th><th>No. Wounded</th><th>No. Captured</th><th>Distance<th></tr>'
+            for (const x of object.features) {
+                text += `\n<tr><td>${x.properties.Control}</td><td>${x.properties.Date}</td><td>${x.properties.Killed}</td><td>${x.properties.Wounded}</td><td>${x.properties.Captured}</td><td>${x.properties.Distance}</td>`
+            }
+        }
+        text += '</table>'
+        div_id.innerHTML = text;
+    }
+
+    function getEvents() {
+        let targetDiv = document.getElementById('event table');
+        let eventTypeSelect = document.getElementById('type');
+        let eventTypeChoice = eventTypeSelect.value;
+        let eventTypeText = eventTypeSelect.options[eventTypeSelect.selectedIndex].value;
+
+        let radius = document.getElementById("radius").value;
+        let usid = {{ usid | safe }};
+
+        fetch("/get_events", {
+            method: "POST",
+            body: JSON.stringify({
+                usid: usid,
+                event_gdf: eventTypeText,
+                radius: radius
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+        .then(response => response.json())
+        .then(json => {
+            events = json;
+            geoJsonToTable(targetDiv, events, eventTypeText)
+        }
+        );
+    }
+
+    document.getElementById("defaultOpen").click();
+    //console.log(typeof hamla_json);
+    dictToTable(hamla_table, hamla_json);
+    dictToTable(hes_table, hes_json);
 
     </script>
 </body>

@@ -70,7 +70,7 @@ def thor_to_db():
 	thorRel = gpd.GeoDataFrame(thorRel, geometry='geometry')
 	j = 0
 	for i, row in thorRel.iterrows():
-		point = Point(row["TGTLATDD_DDD_WGS84"], row["TGTLONDDD_DDD_WGS84"])
+		point = Point(row["TGTLONDDD_DDD_WGS84"], row["TGTLATDD_DDD_WGS84"])
 		thorRel.at[i, "geometry"] = point
 		j += 1
 		progress("Writing coords", j, len(thorRel))

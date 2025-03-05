@@ -8,7 +8,6 @@
     <title>HES Visualisation</title>
 
     <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="heatmap.min.js"></script>
@@ -48,13 +47,28 @@
             z-index: 1000;
         }
 
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #04AA6D;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #04AA6D;
+            cursor: pointer;
+        }
     </style>
 
 
 </head>
 <body>
-
-
 
     <div id="map" style="width: 100%; height: 100%;"></div>
     <div class="timecontrols">
@@ -70,6 +84,7 @@
         var wHeight = window.screen.height;
         var wWidth = window.screen.width;
         var geoStyle = "HAMLA";
+        var heatmapMax = 2000;
 
         var slider = document.getElementById("myRange");
         var output = document.getElementById("month_text");
@@ -97,7 +112,7 @@
             return dString;
         }
 
-        const map = L.map('map').setView([13, 106], 7);
+        const map = L.map('map').setView([{{ y | safe }}, {{ x | safe }}], {{ level | safe }});
 
         const tiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
             { "attribution": "Tiles \u0026copy; Esri \u0026mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community", "detectRetina": false, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false }
@@ -112,8 +127,18 @@
             fillOpacity: 0.6
         };
 
-        let hamletGeojsonFeature = {{ hamlets| safe }}
+        let sitraMarkerOptions = {
+            radius: 5,
+            fillColor: "#0000ff",
+            color: "#0000ff",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.6
+        };
+
+        let hamletGeojsonFeature;
         let thorGeojsonFeature;
+        let sitraGeojsonFeature;
 
         let hamletLayer = L.geoJSON(hamletGeojsonFeature, {
             pointToLayer: function (feature, latlng) {
@@ -123,22 +148,41 @@
                 var pop = feature.properties.POPUL;
                 var size = pop / 2000 + 3;
                 let color;
-                switch (feature.properties.SCSTA) {
-                    case 'SE': color = "#00ff00"; break;
-                    case 'SS': color = "#ffff00"; break;
-                    case 'CO': color = "#ff8800"; break;
-                    case 'VC': color = "#ff0000"; break;
-                    default: color = "#ffffff";
+                switch (feature.properties.CLAS) {
+                    case 'A': color = "#00ff00"; break;
+                    case 'B': color = "#88ff00"; break;
+                    case 'C': color = "#ffff00"; break;
+                    case 'D': color = "#ffcc00"; break;
+                    case 'E': color = "#ff8800"; break;
+                    case 'V': color = "#ff0000"; break;
+                    default: color = "#555555";
                 }
                 return { radius: size, fillColor: color };
 
             },
             onEachFeature: function (feature, layer) {
                 if (months[intMonth] < new Date(1969, 5)) {
-                    layer.bindPopup(`<p>${feature.properties["Hamlet Name"]}</p><p>Population: ${feature.properties.POPUL}</p><p>Security Status: ${feature.properties.SCSTA}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
+                    layer.bindPopup(`<h3>${feature.properties["Hamlet Name"]}</h3><table><tr><td>Population:</td> <td>${feature.properties.POPUL}</td></tr><tr><td>Total Classification:</td> <td>${feature.properties.CLAS}</td></tr><tr><td>Security Status:</td> <td>${feature.properties.SCSTA}</td></tr><tr><td>USID:</td> <td><a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></td></tr></table>`);
                 } else {
-                    layer.bindPopup(`<p>${feature.properties["Hamlet Name"]}</p><p>Population: ${feature.properties.HPOPUL}</p><p>Pacification Model Status: ${feature.properties.HCAT}</p><p>USID: <a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></p>`);
+                    layer.bindPopup(`<h3>${feature.properties["Hamlet Name"]}</h3><table><tr><td>Population:</td> <td>${feature.properties.HPOPUL}</td></tr><tr><td>Total Classification:</td> <td>${feature.properties.HCAT}</td></tr><tr><td>USID:</td> <td><a href="/usid/${feature.properties.USID}" target="_blank">${feature.properties.USID}</a></td></tr></table>`);
                 }
+            }
+        }).addTo(map);
+
+        let sitraLayer = L.geoJson(sitraGeojsonFeature, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, sitraMarkerOptions);
+            },
+            style: function (feature) {
+                if (feature.type == "Polygon") {
+                    return { fillColor: "0000ff" };
+                } else if (feature.type == "Path") {
+                    return { color: "0000ff" };
+                } else {
+                    return { fillColor: "0000ff" };
+                }
+            }, onEachFeature: function (feature, layer) {
+                layer.bindPopup(`<h3>${feature.properties["Control"]}</h3><table><tr><td>Date:</td> <td>${feature.properties.Date.slice(0, 10)}</td></tr><tr><td>No. Killed:</td> <td>${feature.properties.Killed}</td></tr><tr><td>No. Wounded:</td> <td>${feature.properties.Wounded}</td></tr><tr><td>No. Captured:</td> <td>${feature.properties.Captured}</td></tr></table>`);
             }
         }).addTo(map);
         //myLayer.addData();
@@ -147,6 +191,7 @@
         let cfg = {
             "radius": 0.02,
             "maxOpacity": .8,
+            "minOpacity": .1,
             // scales the radius based on map zoom
             "scaleRadius": true,
             // if set to false the heatmap uses the global maximum for colorization
@@ -158,7 +203,7 @@
             // which field name in your data represents the longitude - default "lng"
             lngField: 'lon',
             // which field name in your data represents the data value - default "value"
-            valueField: 'wgt'
+            valueField: 'total_weight'
         };
 
         let heatmapLayer = new HeatmapOverlay(cfg);
@@ -166,18 +211,38 @@
         fetch(`/get_thor/011967`)
             .then(response => response.bytes())
             .then(data => {
-                thorGeojsonFeature = msgpack.deserialize(data);
+                heatmap = msgpack.deserialize(data);
+                heatmap.max = heatmapMax;
+                thorGeojsonFeature = heatmap;
                 heatmapLayer.addTo(map);
-                heatmapLayer.setData(msgpack.deserialize(data));
+                heatmapLayer.setData(heatmap);
             }
-        );
+            );
+
+        fetch(`/get_geojson/011967`)
+            .then(response => response.bytes())
+            .then(data => {
+                hamletGeojsonFeature = msgpack.deserialize(data);
+                hamletLayer.addData(msgpack.deserialize(data));
+            }
+            );
+
+        fetch(`/get_sitra/011967`)
+            .then(response => response.bytes())
+            .then(data => {
+                sitraGeojsonFeature = msgpack.deserialize(data);
+                sitraLayer.addData(msgpack.deserialize(data));
+            }
+            );
+
         var basemaps = {
             "esri Topo": tiles
         };
 
         var overlays = {
             "Hamlets": hamletLayer,
-            "THOR": heatmapLayer
+            "THOR": heatmapLayer,
+            "SITRA": sitraLayer
         };
 
         L.control.layers(basemaps, overlays).addTo(map);
@@ -185,10 +250,10 @@
         function updateMap(d) {
             let dateStr = getMonthYear(d, false);
             fetch(`/get_geojson/${dateStr}`)
-                .then(response => response.json())
+                .then(response => response.bytes())
                 .then(data => {
                     hamletLayer.clearLayers();
-                    hamletLayer.addData(data);
+                    hamletLayer.addData(msgpack.deserialize(data));
                     if (d > new Date(1969, 5)) {
                         hamletLayer.setStyle(
                             function (feature) {
@@ -199,22 +264,30 @@
                                     case 'A': color = "#00ff00"; break;
                                     case 'B': color = "#88ff00"; break;
                                     case 'C': color = "#ffff00"; break;
-                                    case 'D': color = "#ffdd00"; break;
-                                    case 'E': color = "#ffbb00"; break;
-                                    case 'N': color = "#ff8800"; break;
+                                    case 'D': color = "#ffcc00"; break;
+                                    case 'E': color = "#ff8800"; break;
                                     case 'V': color = "#ff0000"; break;
-                                    default: color = "#ffffff";
+                                    default: color = "#555555";
                                 }
                                 return { radius: size, fillColor: color };
                             }
                         );
                     }
                 }
-            );
+                );
             fetch(`/get_thor/${dateStr}`)
                 .then(response => response.bytes())
                 .then(data => {
-                    heatmapLayer.setData(msgpack.deserialize(data));
+                    heatmap = msgpack.deserialize(data);
+                    heatmap.max = heatmapMax;
+                    heatmapLayer.setData(heatmap);
+                }
+                );
+            fetch(`/get_sitra/${dateStr}`)
+                .then(response => response.bytes())
+                .then(data => {
+                    sitraLayer.clearLayers();
+                    sitraLayer.addData(msgpack.deserialize(data));
                 }
                 );
         }
